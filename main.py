@@ -1,6 +1,37 @@
+import pygame
+from Skeleton import Skeleton
+
 def main():
-    print("Hello from procedural-animation!")
+    # Setting up pygame environment
+    pygame.init()
 
+    SCREEN_WIDTH = 1800
+    SCREEN_HEIGHT = 1000
+    CLOCK = pygame.time.Clock()
+    FONT = pygame.font.SysFont("Arial", 12)
 
-if __name__ == "__main__":
-    main()
+    # Setting up the display
+    pygame.display.set_caption("Procedural a#Animation")
+    SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    skeleton = Skeleton(3, 50, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    # Bool to control the main loop
+    running = True
+
+    while running:
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            
+        SCREEN.fill((15, 15, 15))
+
+        skeleton.draw(SCREEN)
+        
+        pygame.display.flip()
+
+        # Cap frame rate
+        CLOCK.tick(165)
+    
+main()
