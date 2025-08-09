@@ -18,4 +18,19 @@ class Dot:
     
     def constrain_child(self):
         """Constrain the child to be in the radius defined in the skeleton"""
-        self.child.position = self.position + pygame.Vector2(self.dist, 0)
+
+        # Check if the dot has a child
+        if self.child == None:
+            return
+
+        # Calculate vector going from parent to child
+        direction_vector = self.child.position - self.position
+
+        # Get normalised direction vector and multiply it by distance between points
+        direction_vector = direction_vector.normalize() * self.dist
+
+        # Move child to current position + direction vector
+        self.child.position = self.position + direction_vector
+    
+    def move(self, velocity):
+        self.position += velocity

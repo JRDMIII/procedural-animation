@@ -11,10 +11,10 @@ def main():
     FONT = pygame.font.SysFont("Arial", 12)
 
     # Setting up the display
-    pygame.display.set_caption("Procedural a#Animation")
+    pygame.display.set_caption("Procedural Animation")
     SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-    skeleton = Skeleton(3, 50, (SCREEN_WIDTH, SCREEN_HEIGHT))
+    skeleton = Skeleton(10, 50, (SCREEN_WIDTH, SCREEN_HEIGHT))
 
     # Bool to control the main loop
     running = True
@@ -26,12 +26,13 @@ def main():
                 running = False
             
         SCREEN.fill((15, 15, 15))
-
+        
+        skeleton.step()
         skeleton.draw(SCREEN)
         
         pygame.display.flip()
 
         # Cap frame rate
-        CLOCK.tick(165)
+        CLOCK.tick(60)
     
 main()

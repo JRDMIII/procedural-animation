@@ -166,4 +166,71 @@ def draw(self, screen):
 
 And with this we can see our circles on the screen!
 
+## Log 2: Stepping the skeleton
+
+Next thing I want to do is add a simple stepping algorithm to have the skeleton start to move around so we can then begin implementing a more robust constraint system. This starts by tracking the position and velocity of the skeleton, using the anchor point at the main point for these values. We then need a step function which does the movement and constraint calculations.
+
+For now the simulation will have default value for velocity simply so we can get things working.
+
+The main problem here is figuring out what direction to move a child dot when constraining. My first thought is to get the vector going from the parent dot to the child directly, normalize the vector and then ensure it's magnitude is equal to the distance defined in the skeleton (call this final vector v_constraint), then move the child dot to `parent.position + v_constraint`. I will try this and see what we get first.
+
+```python
+    def constrain_child(self):
+        """Constrain the child to be in the radius defined in the skeleton"""
+
+        # Check if the dot has a child
+        if self.child == None:
+            return
+
+        # Calculate vector going from parent to child
+        direction_vector = self.child.position - self.position
+
+        # Get normalised direction vector and multiply it by distance between points
+        direction_vector = direction_vector.normalize() * self.dist
+
+        # Move child to current position + direction vector
+        self.child.position = self.position + direction_vector
+```
+
+This did seem to work and we got a moving little snake! But I couldn't be confident it worked until I saw the constraints properly working i.e. working on a snake dynamically moving. Hence, I wanted to implement some way of making the snake move in the circle. For this, I think parametric equations fit quite nicely.
+
+```python
+    def step(self):
+        # velocity = pygame.Vector2(math.cos(self.current_angle)*3, math.sin(self.current_angle)*3)
+        # self.current_angle = (self.current_angle + 5) % 360
+
+        # self.anchor.position += velocity
+    
+        center = pygame.Vector2(self.dimensions.x / 2, self.dimensions.y / 2)
+        radius = 100
+        self.current_angle = (self.current_angle + 0.05) % (2 * math.pi)
+
+        # Update anchor position
+        self.anchor.position.x = center.x + radius * math.cos(self.current_angle)
+        self.anchor.position.y = center.y + radius * math.sin(self.current_angle)
+
+        # Loop through all dots and constrain them
+        current_dot = self.anchor
+        
+        while current_dot != None:
+            current_dot.constrain_child()
+            current_dot = current_dot.child
+```
+
+And we get this:
+
+<div align="center">
+    <img src="./assets/circle.gif" width="600" />
+    <p><em>Figure 2: First procedural animation!</em></p>
+</div>
+
+Like!!! I was initially sceptical based on the fact all the code was based on notions in my head but this works much better than I expected! I also wanted to increase the radius and the length of the skeleton to see if the same quality of animation holds up.
+
+<div align="center">
+    <img src="./assets/larger_circle.gif" width="600" />
+    <p><em>Figure 2: Larger circular movement</em></p>
+</div>
+
+Beautiful. A very cool thing you can see at the start of the gif is the way to body slowly curls into the main circle as it becomes constrained and forced to follow the rest of the body. With this we have a very good starting point!
+
 [^1]: [Argonaut's "A simple procedural animation technique"](https://www.youtube.com/watch?v=qlfh_rv6khY)
