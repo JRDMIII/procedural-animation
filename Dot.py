@@ -64,6 +64,48 @@ class Dot:
 
                 # Set our position to be our parents position + the vector to get to the correct angle
                 self.position = middle.position + new_vec
+            
+    def constrain_parent(self, angle_thresh):
+        """Constrain the child to be in the radius defined in the skeleton"""
+
+        # Check if the dot has a child
+        if self.parent != None:
+            # Calculate vector going from parent to child
+            direction_vector = self.parent.position - self.position
+
+            # Get normalised direction vector and multiply it by distance between points
+            direction_vector = direction_vector.normalize() * self.dist
+
+            # Move child to current position + direction vector
+            self.parent.position = self.position + direction_vector
+
+        # Check if we have a grandparent (i guess?)
+        if self.child != None and self.child.child != None:
+            parent = self.child.child
+            middle = self.child
+
+            # Calculate the 2 vectors
+            parent_vec:pygame.Vector2 = parent.position - middle.position
+            child_vec:pygame.Vector2 = self.position - middle.position
+
+            # Calculate the angle between the two vectors
+            angle = parent_vec.angle_to(child_vec)
+
+            # If we are out of the angle threshold
+            if abs(angle) < angle_thresh or abs(angle) > (360 - angle_thresh):
+
+                norm_vec = parent_vec.normalize()
+
+                set_angle = angle_thresh if angle < angle_thresh else (360 - angle_thresh)
+
+                # Rotate the parent vector by the exact amount for the parent threshold
+                new_vec = pygame.Vector2(
+                    norm_vec.x * math.cos(math.radians(set_angle)) - norm_vec.y * math.sin(math.radians(set_angle)),
+                    norm_vec.x * math.sin(math.radians(set_angle)) + norm_vec.y * math.cos(math.radians(set_angle))
+                ) * self.dist
+
+                # Set our position to be our parents position + the vector to get to the correct angle
+                self.position = middle.position + new_vec
 
     def move(self, velocity):
         self.position += velocity

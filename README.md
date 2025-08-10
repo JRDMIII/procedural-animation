@@ -346,5 +346,263 @@ And this is the result:
 
 I am very happy with this and I'm ready to move onto the next (and probably hardest) part - legs.
 
+## FABRIK Legs
+
+Unfortunately, legs are much more complicated than a body. While the dots within a body can simply be dragged along, legs must calculate where they need to go to get to the next point in the best way possible.
+
+From research, the way this is done procedurally is through a process called **FABRIK**, or **Forward and backward reaching inverse kinematics**. In this process. A target position is given and the skeleton moves forwards and backwards from the target to it's anchor position, gradually converging to a configuration that allows the skeleton to reach to the point or as close to the point as possible while staying at it's anchor point.
+
+From researching and looking at different posts (one especially helpful one for a starting point was this stack overflow post[^2]) the best best idea seemed to be to move the first node of the leg (this would be the foot) to the target position, then constrain all other notes before then moving the node connected to the body back to its anchor point and constraining all other nodes. This can be done for a set iteration count and then the final result is what is seen on the screen.
+
+I did this in a separate python file as I think it is much easier to work on by itself.
+
+Of course the entire leg class is a bit much to put here but essentially it is the same as the skeleton but with a few changes.
+
+1. I now also track the end of the leg so I can do forward and backward movement without needing to iterate all the way to the end of the linked list just to get the "foot"
+
+```python
+def setup_leg(self):
+    """Sets up all dots in the leg"""
+    self.anchor = Dot(0, 50, pygame.Vector2(self.dimensions.x / 2, self.dimensions.y / 2))
+    previous_dot = None
+    current_dot = self.anchor
+
+    for id in range(1, self.length):
+        current_dot.add_parent(previous_dot)
+        current_dot.add_child(Dot(id, 50, pygame.Vector2(0, 0)))
+
+        previous_dot = current_dot
+        current_dot = current_dot.child
+    
+    current_dot.child = None
+    current_dot.parent = previous_dot
+    self.endpoint = current_dot
+
+    # Loop through all dots and constrain them
+    current_dot:Dot = self.anchor
+    
+    while current_dot != None:
+        current_dot.constrain_child(self.angle_thresh)
+        current_dot = current_dot.child
+```
+
+I also need to constrain all dots in the setup of the leg as otherwise we get zero-vector errors in the fabrik function
+
+2. Added the FABRIK function to the leg
+
+```python
+def step(self):
+    """Steps the leg forward"""
+    # Perform fabrik calculation
+    self.fabrik()
+    
+def fabrik(self):
+    """Performs the fabrik algorithm"""
+    for _ in range(0, self.iterations):
+        # Forward
+        self.endpoint.position = self.target_point
+        current_dot = self.endpoint
+        while current_dot != None:
+            current_dot.constrain_parent(self.angle_thresh)
+            current_dot = current_dot.parent
+        
+        # Backward
+        self.anchor.position = self.anchor_point
+        current_dot = self.anchor
+        while current_dot != None:
+            current_dot.constrain_child(self.angle_thresh)
+            current_dot = current_dot.child
+```
+
+I did also implement a `constrain_parent()` function but just imagine the `constrain_child()` function with the child and parent switched.
+
+I currently have the number of iterations set to 30 but I'm tweaking to see what happens. A side note to explain something else I implemented just to make sure things are setup correctly is a way of printing out the current configuration of a skeleton, dot or leg:
+
+```python
+# In Leg and Skeleton class
+def __str__(self):
+    string = ""
+
+    current_dot = self.anchor
+    
+    while current_dot != None:
+        string += current_dot.__str__() + "\n"
+        current_dot = current_dot.child
+    
+    string += f"endpoint: {self.endpoint} \n"
+    
+    return string
+```
+
+...and in the Dot class
+
+```python
+def __str__(self):
+    return f"""
+    id: {self.id}
+    parent: {None if self.parent == None else self.parent.id}
+    child: {None if self.child == None else self.child.id}
+    """
+```
+
+This makes it very easy to see if the linked lists are set up correctly which is always nice (work hard so you don't have to work hard).
+
+With all this implemented, I also quickly added a check for the current mouse position and set the target position of the leg (I guess it is an arm for now) to that point. That leads to this:
+
+<div align="center">
+    <img src="./assets/fabrik_arm.gif" width="600" />
+    <p><em>Figure 7: FABRIK arm</em></p>
+</div>
+
+I currently have the angle constraints set to 0 because you get some very weird movements when you fold the arm in on itself.
+
+One thing that did really surprise me was just how efficient the algorithm seemed to be working - so of course I pushed the algorithm to the max. But even running 500 iterations per step with 30 dots in the leg, the simulation ran at a constant 30 frames per second:
+
+<div align="center">
+    <img src="./assets/fabrik_fps_test.gif" width="600" />
+    <p><em>Figure 8: FABRIK performance test</em></p>
+</div>
+
+Of course all we need are enough joins for an ant which are 3 + the foot so 4 dots so running this simulation with 500 iterations is more than viable. If performance did become an issue especially when using this in larger simulations with multiple ants, An idea I had was to switch from a linked list structure to a dictionary data structure however currently we are already only in O(n) time as you only need to iterate up and down the list so I'm not sure how much improvement that will give.
+
+Next thing to implement is the anchoring to the body. We need to have a way of creating a point on the body that will stay in the same place relative to the body at all times. This one did require quite a bit of thought as it isn't enough to just add another dot to the skeleton and let it move (if we were working in Unity it would be that easy). The first way I can think of is to add the anchor point as a child to neighbouring parts of the skeleton and constrain it based on the positions of all those dots. To illustrate:
+
+<div align="center">
+    <img src="./assets/leg_anchor.png" width="600" />
+    <p><em>Figure 9: Leg anchor idea</em></p>
+</div>
+
+What we do here is calculate the intersection of the two circles around the 2 skeletal dots. We would need to figure out which intersection to pick (as there are 2 when circles intersect unless it is tangential) but in this simulation ants are going to be symmetrical meaning i can just use both interestions to create 2 anchor points in one!
+
+<div align="center">
+    <img src="./assets/two_leg_anchor.png" width="600" />
+    <p><em>Figure 10: Two leg anchor</em></p>
+</div>
+
+The other idea is to just use the points in the skeleton as anchors for the dots which is SO much easier and will be what I do for now.
+
+When it comes to creating target points my idea is to use the vectors between points. I can calculate the vector between 2 skeletal points and get the perpendicular vector to it. That will then give me the direction to move along to place the target point.
+
+This couldn't have been a harder task. ChatGPT was no help despite being upgraded to 5.0 which is exactly what you like to hear for the advancement of GAI but I resorted to the best neural network of them all - ma brain - and thought of a few things.
+
+1. I could get a point slightly infront or behind an anchor in relation to the body of the ant by adding or subtracting the direction vector from the anchor position.
+2. I needed to add velocity to the feet of the legs as they were going to just teleport to their next target point
+
+This required a lot of refactoring and a lot of code - a lot of worry that i should've committed the code before making a change - but the result was more than good.
+
+First I implemented the anchor points and each of the legs (currently done separately just to make it easier for me to understand when programming and I will optimise next):
+
+```python
+def __init__(self, dimensions):
+    self.dimensions = pygame.Vector2(
+        dimensions[0],
+        dimensions[1]
+    )
+
+    self.skeleton = Skeleton(3, (self.dimensions.x, self.dimensions.y), 110, [20, 10, 30], [30, 40, 0])
+    
+    self.left_front = Leg(3, (self.dimensions.x, self.dimensions.y), 20)
+    self.left_middle = Leg(3, (self.dimensions.x, self.dimensions.y), 20)
+    self.left_back = Leg(3, (self.dimensions.x, self.dimensions.y), 20)
+
+    self.right_front = Leg(3, (self.dimensions.x, self.dimensions.y), 20)
+    self.right_middle = Leg(3, (self.dimensions.x, self.dimensions.y), 20)
+    self.right_back = Leg(3, (self.dimensions.x, self.dimensions.y), 20)
+
+    self.skeleton.step()
+
+    self.leg_anchor_points = [
+        self.skeleton.anchor.position,
+        self.skeleton.anchor.child.position,
+    ]
+
+    self.setup_ant()
+
+def setup_ant(self):
+    """Sets up all elements of the ant"""
+    self.right_front.anchor_point = self.leg_anchor_points[0]
+    self.left_front.anchor_point = self.leg_anchor_points[0]
+
+    self.right_middle.anchor_point = self.leg_anchor_points[1]
+    self.left_middle.anchor_point = self.leg_anchor_points[1]
+
+    self.right_back.anchor_point = self.leg_anchor_points[1]
+    self.left_back.anchor_point = self.leg_anchor_points[1]
+```
+
+From here I then created 3 functions to step forward the front set, middle set and back set of legs. They are all very similar which should hopefully make optimisation quite easy:
+
+```python
+def step_front_legs(self):
+    """Sets the front legs target position and moves the front legs"""
+    # Step the front left and right legs
+
+    point_1 = self.skeleton.anchor.position
+    point_2 = self.skeleton.anchor.child.position
+
+    # Get vector for those two
+    dir_vector = (point_2 - point_1).normalize()
+    
+    # Rotate the parent vector by the exact amount for the parent threshold
+    new_vec = pygame.Vector2(
+        dir_vector.x * math.cos(math.radians(-90)) - dir_vector.y * math.sin(math.radians(-90)),
+        dir_vector.x * math.sin(math.radians(-90)) + dir_vector.y * math.cos(math.radians(-90))
+    ) * 50
+
+    new_left_vec = new_vec - (dir_vector * 50)
+    new_right_vec = (new_vec * -1) - (dir_vector * 50)
+
+    left_target_point = self.leg_anchor_points[0] + new_left_vec
+    right_target_point = self.leg_anchor_points[0] + new_right_vec
+
+    if self.left_front.target_point.distance_to(left_target_point) > 80:
+        self.left_front.set_target_point(left_target_point)
+    
+    if self.right_front.target_point.distance_to(right_target_point) > 80:
+        self.right_front.set_target_point(right_target_point)
+
+    self.left_front.step()
+    self.right_front.step()
+```
+
+There also needed to be some tweaks to the `Leg` class to have the legs move rather than just teleport. The easiest way to do this (in my humble opinion) is to have a `target_point` variable and a `current_target_point` variable. When we change the target position in the Ant class, we call a function in the leg to say that we should begin accelerating our leg in the direction of the new target point. We can then move the current target point linearly from it's current position to the position of the target point, accelerating it along the direction vector to the new target position.
+
+While implementing this, I had a problem of the current target position never settling as it was never exactly on the target position, so I also included a maximum number of moving steps a leg can make and after that amount of steps the leg will stop moving and snap to the final target position.
+
+```python
+def set_target_point(self, point: pygame.Vector2):
+    """Change the target point of the leg"""
+    self.target_point = point
+    self.on_target_point_changed()
+
+def on_target_point_changed(self):
+    """Event function for when the target point is changed"""
+    self.target_point_moving = True
+    
+def move_target_point(self):
+    """Move the current target point linearly towards the new target position"""
+    # Get direction to next point
+    if self.target_point.distance_to(self.current_target_point) < 5 or self.steps_moving == 10:
+        self.target_point_moving = False
+        self.steps_moving = 0
+        self.current_target_point = self.target_point
+
+        self.velocity = pygame.Vector2(0, 0)
+        return
+
+    dir = (self.target_point - self.current_target_point).normalize()
+    self.velocity = self.velocity + pygame.Vector2(self.acceleration * dir.x, self.acceleration * dir.y)
+    self.current_target_point += self.velocity
+```
+
+And with all this implemented plus some other small bug fixes, we get this:
+
+<div align="center">
+    <img src="./assets/first_ant.gif" width="600" />
+    <p><em>Figure 11: First ant!!!</em></p>
+</div>
+
+Honestly I could just end it here because of how crazy it is to think that I programmed that basically ant looking thing to move as it is now but I know I can make the simulation run and move better.
 
 [^1]: [Argonaut's "A simple procedural animation technique"](https://www.youtube.com/watch?v=qlfh_rv6khY)
+[^2]: [FABRIK IK algorithm query](https://stackoverflow.com/questions/72883753/how-to-implement-fabrik-algorithm-inverse-kinematics-with-joint-angle-constrai)

@@ -1,6 +1,5 @@
 import pygame
-from Skeleton import Skeleton
-from Ant import Ant
+from Leg import Leg
 
 def main():
     # Setting up pygame environment
@@ -15,32 +14,35 @@ def main():
     pygame.display.set_caption("Procedural Animation")
     SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-    # skeleton = Skeleton(3, (SCREEN_WIDTH, SCREEN_HEIGHT), 110, [20, 10, 30], [30, 40, 0])
-    ant = Ant((SCREEN_WIDTH, SCREEN_HEIGHT))
-    # print(skeleton)
+    leg = Leg(4, (SCREEN_WIDTH, SCREEN_HEIGHT), 70)
+    print(leg)
 
     # Bool to control the main loop
     running = True
 
     while running:
+        avg = (0, 0)
+
         # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+        mouse_pos = pygame.mouse.get_pos()
+        leg.set_target_point(mouse_pos)
             
         SCREEN.fill((15, 15, 15))
 
-        fps = CLOCK.get_fps()
-        fps_text = FONT.render(f"FPS: {fps:.2f}", True, (255, 255, 255))
-        SCREEN.blit(fps_text, (10, 10))
+        # fps = CLOCK.get_fps()
+        # fps_text = FONT.render(f"FPS: {fps:.2f}", True, (255, 255, 255))
+        # SCREEN.blit(fps_text, (10, 10))
         
-        
-        ant.step()
-        ant.draw(SCREEN)
+        leg.step()
+        leg.draw(SCREEN)
         
         pygame.display.flip()
 
         # Cap frame rate
-        CLOCK.tick(165)
+        CLOCK.tick(60)
     
 main()
