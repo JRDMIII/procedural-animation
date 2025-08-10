@@ -645,7 +645,7 @@ All of that gives us this:
 
 <div align="center">
     <img src="./assets/ant_following_mouse.gif" width="600" />
-    <p><em>Figure 12: First ant!!!</em></p>
+    <p><em>Figure 12: Ant Mouse Movement</em></p>
 </div>
 
 If that isn't a successful log I don't know what is honestly.
