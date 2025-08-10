@@ -15,6 +15,12 @@ class Ant:
     right_middle: Leg
     right_back: Leg
 
+    velocity: pygame.Vector2
+    max_velocity: int
+    acceleration: int
+    target_position: pygame.Vector2
+    moving: bool
+
     leg_anchor_points: list[pygame.Vector2]
 
     def __init__(self, dimensions):
@@ -40,7 +46,17 @@ class Ant:
             self.skeleton.anchor.child.position,
         ]
 
+        self.target_position = pygame.Vector2(self.dimensions.x, self.dimensions.y)
+        self.velocity = pygame.Vector2(0, 0)
+        self.acceleration = 2
+        self.max_velocity = 3
+        self.moving = False
+
         self.setup_ant()
+    
+    def set_target_position(self, position: pygame.Vector2):
+        self.target_position = pygame.Vector2(position[0], position[1])
+        self.moving = True
 
     def setup_ant(self):
         """Sets up all elements of the ant"""
@@ -155,6 +171,20 @@ class Ant:
         self.right_back.step()
 
     def step(self):
+        if self.moving:
+            print(abs(self.target_position.distance_to(self.skeleton.anchor.position)))
+            if abs(self.target_position.distance_to(self.skeleton.anchor.position)) < 50:
+                self.moving = False
+            else:
+                dir = (self.target_position - self.skeleton.anchor.position).normalize()
+
+                self.velocity += dir * self.acceleration
+
+                if self.velocity.magnitude() > self.max_velocity:
+                    self.velocity = self.velocity.normalize() * self.max_velocity
+                
+                self.skeleton.anchor.position += self.velocity
+
         self.skeleton.step()
 
         self.step_front_legs()

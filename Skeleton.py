@@ -27,8 +27,6 @@ class Skeleton:
             dimensions[1]
         )
 
-        self.current_angle = 0
-
         self.setup_skeleton()
 
     def setup_skeleton(self):
@@ -55,13 +53,13 @@ class Skeleton:
 
         # self.anchor.position += velocity
     
-        center = pygame.Vector2(self.dimensions.x / 2, self.dimensions.y / 2)
-        a = 350  # size of the infinity sign
-        self.current_angle = (self.current_angle + 0.005) % (2 * math.pi)
+        # center = pygame.Vector2(self.dimensions.x / 2, self.dimensions.y / 2)
+        # a = 350  # size of the infinity sign
+        # self.current_angle = (self.current_angle + 0.005) % (2 * math.pi)
 
-        # Lemniscate of Gerono
-        self.anchor.position.x = center.x + a * math.cos(self.current_angle)
-        self.anchor.position.y = center.y + a * math.sin(self.current_angle) * math.cos(self.current_angle)
+        # # Lemniscate of Gerono
+        # self.anchor.position.x = center.x + a * math.cos(self.current_angle)
+        # self.anchor.position.y = center.y + a * math.sin(self.current_angle) * math.cos(self.current_angle)
 
         # Loop through all dots and constrain them
         current_dot:Dot = self.anchor

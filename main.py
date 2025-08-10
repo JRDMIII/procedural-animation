@@ -27,6 +27,9 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
+        mouse_pos = pygame.mouse.get_pos()
+        ant.set_target_position(mouse_pos)
             
         SCREEN.fill((15, 15, 15))
 
@@ -34,13 +37,12 @@ def main():
         fps_text = FONT.render(f"FPS: {fps:.2f}", True, (255, 255, 255))
         SCREEN.blit(fps_text, (10, 10))
         
-        
         ant.step()
         ant.draw(SCREEN)
         
         pygame.display.flip()
 
         # Cap frame rate
-        CLOCK.tick(165)
+        CLOCK.tick(120)
     
 main()

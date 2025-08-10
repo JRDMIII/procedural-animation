@@ -604,5 +604,51 @@ And with all this implemented plus some other small bug fixes, we get this:
 
 Honestly I could just end it here because of how crazy it is to think that I programmed that basically ant looking thing to move as it is now but I know I can make the simulation run and move better.
 
+I quickly changed the number of iterations for the FABRIK algorithm down to 50 from 500 and went from around 70 fps to around 110 which was great. I then for fun decided to include a similar mouse finding algorithm to the leg test script in the ant script, producing this:
+
+```python
+# In constructor...
+
+self.target_position = pygame.Vector2(self.dimensions.x, self.dimensions.y)
+self.velocity = pygame.Vector2(0, 0)
+self.acceleration = 2
+self.max_velocity = 3
+self.moving = False
+```
+
+And then some functions for setting a target position and moving:
+
+```python
+def set_target_position(self, position: pygame.Vector2):
+    self.target_position = pygame.Vector2(position[0], position[1])
+    self.moving = True
+
+def step(self):
+    if self.moving:
+        print(abs(self.target_position.distance_to(self.skeleton.anchor.position)))
+        if abs(self.target_position.distance_to(self.skeleton.anchor.position)) < 50:
+            self.moving = False
+        else:
+            dir = (self.target_position - self.skeleton.anchor.position).normalize()
+
+            self.velocity += dir * self.acceleration
+
+            if self.velocity.magnitude() > self.max_velocity:
+                self.velocity = self.velocity.normalize() * self.max_velocity
+            
+            self.skeleton.anchor.position += self.velocity
+
+    # ...
+```
+
+All of that gives us this:
+
+<div align="center">
+    <img src="./assets/ant_following_mouse.gif" width="600" />
+    <p><em>Figure 12: First ant!!!</em></p>
+</div>
+
+If that isn't a successful log I don't know what is honestly.
+
 [^1]: [Argonaut's "A simple procedural animation technique"](https://www.youtube.com/watch?v=qlfh_rv6khY)
 [^2]: [FABRIK IK algorithm query](https://stackoverflow.com/questions/72883753/how-to-implement-fabrik-algorithm-inverse-kinematics-with-joint-angle-constrai)
