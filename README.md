@@ -228,9 +228,65 @@ Like!!! I was initially sceptical based on the fact all the code was based on no
 
 <div align="center">
     <img src="./assets/larger_circle.gif" width="600" />
-    <p><em>Figure 2: Larger circular movement</em></p>
+    <p><em>Figure 3: Larger circular movement</em></p>
 </div>
 
 Beautiful. A very cool thing you can see at the start of the gif is the way to body slowly curls into the main circle as it becomes constrained and forced to follow the rest of the body. With this we have a very good starting point!
+
+## Log 3: Angle constraints
+
+Next thing to implement is the angle constraints: This is essentially stopping the skeleton from being able to fold in on itself as it moving. The easiest way to implement this in my head (and according to the video) is to calculate the angle being made between the current dot and the 2nd child of the dot. If this angle is greater than the maximum angle then we snap the child of the child back to the maximum angle.
+
+While thinking about this implementation I realised I'll probably need to do this calculation backwards i.e. when checking a dot we look at the parent's parent and calculate the angle. For this we need to switch our linked list to be a doubly linked list (i.e. you can traverse backwards and forwards) or include another iterator. I think for this case it would be easier to just convert it to a doubly linked list.
+
+```python
+class Dot:
+    id: int # Position in the dot list
+    child: 'Dot | None' # Child dot of this object
+    parent: 'Dot | None' # Child dot of this object
+    dist: int # Distance to constrain child to
+    position: pygame.Vector2 # Current position of the dot
+```
+
+Next, it was time to implement the angle constraint function. This was actually a lot more difficult than I thought but it was also down to me being quite silly. The main error I encountered was a lack of knowledge regarding the `math` trigonometry functions. 2 hours was spent figuring out why it wasn't working while not realising `math.cos()` and `math.sin()` take radian angles instead of degrees. Once I had figured this out the code ended up being:
+
+```python
+# Check if we have a grandparent (i guess?)
+if self.parent != None and self.parent.parent != None:
+    parent = self.parent.parent
+    middle = self.parent
+
+    # Calculate the 2 vectors
+    parent_vec:pygame.Vector2 = parent.position - middle.position
+    child_vec:pygame.Vector2 = self.position - middle.position
+
+    # Calculate the angle between the two vectors
+    angle = parent_vec.angle_to(child_vec)
+
+    # If we are out of the angle threshold
+    if abs(angle) < angle_thresh or abs(angle) > (360 - angle_thresh):
+
+        norm_vec = parent_vec.normalize()
+
+        set_angle = angle_thresh if angle < angle_thresh else (360 - angle_thresh)
+
+        # Rotate the parent vector by the exact amount for the parent threshold
+        new_vec = pygame.Vector2(
+            norm_vec.x * math.cos(math.radians(set_angle)) - norm_vec.y * math.sin(math.radians(set_angle)),
+            norm_vec.x * math.sin(math.radians(set_angle)) + norm_vec.y * math.cos(math.radians(set_angle))
+        ) * self.dist
+
+        # Set our position to be our parents position + the vector to get to the correct angle
+        self.position = middle.position + new_vec
+```
+
+and we end up with this:
+
+<div align="center">
+    <img src="./assets/angle_constraint_infinity.gif" width="600" />
+    <p><em>Figure 4: Angle constraint with infinity movement</em></p>
+</div>
+
+I think that works very well and we are good to move onto the next thing - body segment sizes!
 
 [^1]: [Argonaut's "A simple procedural animation technique"](https://www.youtube.com/watch?v=qlfh_rv6khY)

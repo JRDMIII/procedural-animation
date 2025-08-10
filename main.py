@@ -14,7 +14,8 @@ def main():
     pygame.display.set_caption("Procedural Animation")
     SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-    skeleton = Skeleton(10, 50, (SCREEN_WIDTH, SCREEN_HEIGHT))
+    skeleton = Skeleton(10, 50, (SCREEN_WIDTH, SCREEN_HEIGHT), 110)
+    print(skeleton)
 
     # Bool to control the main loop
     running = True
@@ -33,6 +34,6 @@ def main():
         pygame.display.flip()
 
         # Cap frame rate
-        CLOCK.tick(60)
+        CLOCK.tick(165)
     
 main()
