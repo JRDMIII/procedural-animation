@@ -6,35 +6,40 @@ class Skeleton:
     # Defining parameters
     length: int             # Length of the skeleton
     anchor: 'Dot | None'    # The dot that is moved around
-    dot_dist: int
+    dot_distances: list[int]
     dimensions: pygame.Vector2
+    dot_sizes: list[int]
 
-    def __init__(self, length, dist, dimensions, angle_thresh):
+    def __init__(self, length, dimensions, angle_thresh, dot_sizes:list[int], dot_distances:list[int]):
         self.length = length    
         self.anchor = None      
-        self.dot_dist = dist
+        self.dot_distances = dot_distances
         self.angle_thresh = angle_thresh
+        self.dot_sizes = dot_sizes
+
+        # Checking to see if we have the same amount of sizes and dots
+        if not len(dot_sizes) == self.length:
+            while len(dot_sizes) != self.length:
+                dot_sizes.append(5)
 
         self.dimensions = pygame.Vector2(
             dimensions[0],
             dimensions[1]
         )
 
-        # Debug
         self.current_angle = 0
-        self.angle_step = 0.1
 
         self.setup_skeleton()
 
     def setup_skeleton(self):
         """Setup the full skeleton"""
-        self.anchor = Dot(0, self.dot_dist, pygame.Vector2(self.dimensions.x / 2, self.dimensions.y / 2))
+        self.anchor = Dot(0, self.dot_distances[0], pygame.Vector2(self.dimensions.x / 2, self.dimensions.y / 2))
         previous_dot = None
         current_dot = self.anchor
 
         for id in range(1, self.length):
             current_dot.add_parent(previous_dot)
-            current_dot.add_child(Dot(id, self.dot_dist, pygame.Vector2(0, 0)))
+            current_dot.add_child(Dot(id, self.dot_distances[id], pygame.Vector2(0, 0)))
 
             previous_dot = current_dot
             current_dot = current_dot.child
@@ -69,7 +74,7 @@ class Skeleton:
         while current_dot != None:
             pygame.draw.circle(screen,
                 (255, 0, 0) if current_dot.id == 0  else (255, 255, 255), 
-                current_dot.position, 10, 3)
+                current_dot.position, self.dot_sizes[current_dot.id], 3)
             current_dot = current_dot.child
         
     def __str__(self):

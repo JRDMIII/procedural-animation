@@ -289,4 +289,62 @@ and we end up with this:
 
 I think that works very well and we are good to move onto the next thing - body segment sizes!
 
+## Log 4: Body Size
+
+This section should be quite an easy part of the process. For each circle in the body of the skeleton, we can define a size which the circle should be and when we draw it, we iterate through this list, using each size for each dot to create the shape of our animal (in our case an ant).
+
+```python
+# ...
+
+self.dot_sizes = dot_sizes
+
+# Checking to see if we have the same amount of sizes and dots
+if not len(dot_sizes) == self.length:
+    while len(dot_sizes) != self.length:
+        # Add default dot size to pad the dot_sizes list
+        dot_sizes.append(5)
+
+# ...
+```
+
+I also added the padding check to make sure that we have a size for every single dot.
+
+<div align="center">
+    <img src="./assets/dot_sizes.gif" width="600" />
+    <p><em>Figure 5: Differing dot sizes</em></p>
+</div>
+
+This also lead me to realise it is probably good to add a size for each body segment as well so that you can have some dots closer together and some further apart. For this we would need a similar array and similar functionality so there isn't much complexity to this.
+
+```python
+# ...
+
+self.dot_distances = dot_distances
+
+# ...
+
+def setup_skeleton(self):
+    """Setup the full skeleton"""
+    self.anchor = Dot(0, self.dot_distances[0], pygame.Vector2(self.dimensions.x / 2, self.dimensions.y / 2))
+    previous_dot = None
+    current_dot = self.anchor
+
+    for id in range(1, self.length):
+        current_dot.add_parent(previous_dot)
+        current_dot.add_child(Dot(id, self.dot_distances[id], pygame.Vector2(0, 0)))
+
+        previous_dot = current_dot
+        current_dot = current_dot.child
+```
+
+And this is the result:
+
+<div align="center">
+    <img src="./assets/segment_lengths.gif" width="600" />
+    <p><em>Figure 6: Differing segment lengths</em></p>
+</div>
+
+I am very happy with this and I'm ready to move onto the next (and probably hardest) part - legs.
+
+
 [^1]: [Argonaut's "A simple procedural animation technique"](https://www.youtube.com/watch?v=qlfh_rv6khY)

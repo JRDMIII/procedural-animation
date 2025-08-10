@@ -14,7 +14,7 @@ def main():
     pygame.display.set_caption("Procedural Animation")
     SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-    skeleton = Skeleton(10, 50, (SCREEN_WIDTH, SCREEN_HEIGHT), 110)
+    skeleton = Skeleton(3, (SCREEN_WIDTH, SCREEN_HEIGHT), 110, [20, 10, 30], [30, 40, 0])
     print(skeleton)
 
     # Bool to control the main loop
