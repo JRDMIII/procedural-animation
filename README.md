@@ -196,11 +196,8 @@ This did seem to work and we got a moving little snake! But I couldn't be confid
 
 ```python
     def step(self):
-        # velocity = pygame.Vector2(math.cos(self.current_angle)*3, math.sin(self.current_angle)*3)
-        # self.current_angle = (self.current_angle + 5) % 360
-
-        # self.anchor.position += velocity
-    
+        """Step the skeleton forward in the simulation"""
+            
         center = pygame.Vector2(self.dimensions.x / 2, self.dimensions.y / 2)
         radius = 100
         self.current_angle = (self.current_angle + 0.05) % (2 * math.pi)
@@ -356,9 +353,7 @@ From researching and looking at different posts (one especially helpful one for 
 
 I did this in a separate python file as I think it is much easier to work on by itself.
 
-Of course the entire leg class is a bit much to put here but essentially it is the same as the skeleton but with a few changes.
-
-1. I now also track the end of the leg so I can do forward and backward movement without needing to iterate all the way to the end of the linked list just to get the "foot"
+Of course the entire leg class is a bit much to put here but essentially it is the same as the skeleton but with a few changes, one being that I now also track the end of the leg so I can do forward and backward movement without needing to iterate all the way to the end of the linked list just to get the "foot"
 
 ```python
 def setup_leg(self):
@@ -386,7 +381,7 @@ def setup_leg(self):
         current_dot = current_dot.child
 ```
 
-I also need to constrain all dots in the setup of the leg as otherwise we get zero-vector errors in the fabrik function
+I also need to constrain all dots in the setup of the leg as otherwise we get zero-vector errors in the `fabrik()` function
 
 2. Added the FABRIK function to the leg
 
@@ -472,7 +467,7 @@ Next thing to implement is the anchoring to the body. We need to have a way of c
     <p><em>Figure 9: Leg anchor idea</em></p>
 </div>
 
-What we do here is calculate the intersection of the two circles around the 2 skeletal dots. We would need to figure out which intersection to pick (as there are 2 when circles intersect unless it is tangential) but in this simulation ants are going to be symmetrical meaning i can just use both interestions to create 2 anchor points in one!
+What we do here is calculate the intersection of the two circles around the 2 skeletal dots. We would need to figure out which intersection to pick (as there are 2 when circles intersect unless it is tangential) but in this simulation ants are going to be symmetrical meaning I can just use both interestions to create 2 anchor points in one!
 
 <div align="center">
     <img src="./assets/two_leg_anchor.png" width="600" />
@@ -488,7 +483,7 @@ This couldn't have been a harder task. ChatGPT was no help despite being upgrade
 1. I could get a point slightly infront or behind an anchor in relation to the body of the ant by adding or subtracting the direction vector from the anchor position.
 2. I needed to add velocity to the feet of the legs as they were going to just teleport to their next target point
 
-This required a lot of refactoring and a lot of code - a lot of worry that i should've committed the code before making a change - but the result was more than good.
+This required a lot of refactoring and a lot of code - a lot of worry that I should've committed the code before making a change - but the result was more than good.
 
 First I implemented the anchor points and each of the legs (currently done separately just to make it easier for me to understand when programming and I will optimise next):
 
@@ -604,7 +599,7 @@ And with all this implemented plus some other small bug fixes, we get this:
 
 Honestly I could just end it here because of how crazy it is to think that I programmed that basically ant looking thing to move as it is now but I know I can make the simulation run and move better.
 
-I quickly changed the number of iterations for the FABRIK algorithm down to 50 from 500 and went from around 70 fps to around 110 which was great. I then for fun decided to include a similar mouse finding algorithm to the leg test script in the ant script, producing this:
+I quickly changed the number of iterations for the FABRIK algorithm down to 50 from 500 and the frame-rate went from around 70 fps to around 110 which was great. I then for fun decided to include a similar mouse finding algorithm to the leg test script in the ant script, producing this:
 
 ```python
 # In constructor...

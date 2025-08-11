@@ -172,7 +172,6 @@ class Ant:
 
     def step(self):
         if self.moving:
-            print(abs(self.target_position.distance_to(self.skeleton.anchor.position)))
             if abs(self.target_position.distance_to(self.skeleton.anchor.position)) < 50:
                 self.moving = False
             else:
@@ -186,6 +185,7 @@ class Ant:
                 self.skeleton.anchor.position += self.velocity
 
         self.skeleton.step()
+
 
         self.step_front_legs()
         self.step_mid_legs()

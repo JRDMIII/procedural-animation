@@ -15,9 +15,7 @@ def main():
     pygame.display.set_caption("Procedural Animation")
     SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-    # skeleton = Skeleton(3, (SCREEN_WIDTH, SCREEN_HEIGHT), 110, [20, 10, 30], [30, 40, 0])
     ant = Ant((SCREEN_WIDTH, SCREEN_HEIGHT))
-    # print(skeleton)
 
     # Bool to control the main loop
     running = True
@@ -31,7 +29,7 @@ def main():
         mouse_pos = pygame.mouse.get_pos()
         ant.set_target_position(mouse_pos)
             
-        SCREEN.fill((15, 15, 15))
+        SCREEN.fill((30, 30, 30))
 
         fps = CLOCK.get_fps()
         fps_text = FONT.render(f"FPS: {fps:.2f}", True, (255, 255, 255))
@@ -43,6 +41,6 @@ def main():
         pygame.display.flip()
 
         # Cap frame rate
-        CLOCK.tick(120)
+        CLOCK.tick(165)
     
 main()
