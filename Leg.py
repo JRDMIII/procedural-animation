@@ -7,19 +7,21 @@ class Leg:
     dimensions: pygame.Vector2
     anchor_point: pygame.Vector2
     angle_thresh: int
+    segment_length: int
 
-    def __init__(self, length, dimensions, angle_thresh):
+    def __init__(self, length, dimensions, angle_thresh, segment_length):
         self.dimensions = pygame.Vector2(
             dimensions[0],
             dimensions[1]
         )
         
+        self.segment_length = segment_length
         self.anchor_point = pygame.Vector2(self.dimensions.x / 2, self.dimensions.y / 2)
         self.target_point = pygame.Vector2(0, 0)
         self.current_target_point = self.target_point
         self.target_point_moving = False
         self.velocity = pygame.Vector2(0, 0)
-        self.acceleration = 3
+        self.acceleration = 2
         self.steps_moving = 0
 
         self.length = length
@@ -49,22 +51,22 @@ class Leg:
             self.steps_moving = 0
             self.current_target_point = self.target_point
 
-            self.velocity = pygame.Vector2(0, 0)
+            self.velocity.x, self.velocity.y = 0, 0
             return
 
         dir = (self.target_point - self.current_target_point).normalize()
-        self.velocity = self.velocity + pygame.Vector2(self.acceleration * dir.x, self.acceleration * dir.y)
+        self.velocity.xy += (self.acceleration * dir.x, self.acceleration * dir.y)
         self.current_target_point += self.velocity
 
     def setup_leg(self):
         """Sets up all dots in the leg"""
-        self.anchor = Dot(0, 30, pygame.Vector2(self.dimensions.x / 2, self.dimensions.y / 2))
+        self.anchor = Dot(0, self.segment_length, pygame.Vector2(self.dimensions.x / 2, self.dimensions.y / 2))
         previous_dot = None
         current_dot = self.anchor
 
         for id in range(1, self.length):
             current_dot.add_parent(previous_dot)
-            current_dot.add_child(Dot(id, 30, pygame.Vector2(0, 0)))
+            current_dot.add_child(Dot(id, self.segment_length, pygame.Vector2(0, 0)))
 
             previous_dot = current_dot
             current_dot = current_dot.child
@@ -84,15 +86,19 @@ class Leg:
         current_dot = self.anchor
 
         while current_dot != None:
+            # pygame.draw.circle(screen,
+            #     (255, 0, 0) if current_dot.id == 0  else (255, 255, 255), 
+            #     current_dot.position, 4, 3)
+            
             pygame.draw.circle(screen,
-                (255, 0, 0) if current_dot.id == 0  else (255, 255, 255), 
+                (240, 220, 180) if current_dot.id == 0  else (240, 220, 180), 
                 current_dot.position, 4, 3)
             
             # Draw a line to the child if it exists
             if current_dot.child is not None:
                 pygame.draw.line(
                     screen,
-                    (200, 200, 200),  # Line color
+                    (240, 220, 180),  # Line color
                     current_dot.position,
                     current_dot.child.position,
                     4  # Line thickness
@@ -100,7 +106,7 @@ class Leg:
 
             current_dot = current_dot.child
         
-        pygame.draw.circle(screen, (255, 0, 0), self.target_point, 2, 2)
+        # pygame.draw.circle(screen, (255, 0, 0), self.target_point, 2, 2)
 
     def step(self):
         """Steps the leg forward"""

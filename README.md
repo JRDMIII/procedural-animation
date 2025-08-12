@@ -1,5 +1,9 @@
 # Dev Log: Procedural Animation
 
+<div align="center">
+    <img src="./assets/final_ant.gif" width="800" />
+</div>
+
 ## The Theory
 After looking it at too much rainworld content I have become very obsessed with the idea of procedural animation and specifically locomotion that isn't predefined with sprites. Hence, I will be exploring the ideas of procedural animation, hopefully making some cool things along the way!
 
@@ -343,7 +347,7 @@ And this is the result:
 
 I am very happy with this and I'm ready to move onto the next (and probably hardest) part - legs.
 
-## FABRIK Legs
+## Log 5: FABRIK Legs
 
 Unfortunately, legs are much more complicated than a body. While the dots within a body can simply be dragged along, legs must calculate where they need to go to get to the next point in the best way possible.
 
@@ -644,6 +648,104 @@ All of that gives us this:
 </div>
 
 If that isn't a successful log I don't know what is honestly.
+
+## Log 6: Code Optimisation
+
+Now we have a nice moving ant it is time to make this code less bulky, starting off with the stepping of the legs. Currently I have three separate functions for stepping the front, middle and back legs but they are all exactly the same they just use different values - meaning we can just input those values as parameters into a general function for stepping legs.
+
+First I create some SimpleNamespace objects to hold the values for each set:
+
+```python
+self.front_params = SimpleNamespace()
+
+self.front_params.anchor_vert = -15
+self.front_params.horizontal = 40
+self.front_params.vertical = -80
+self.front_params.dist = 80
+
+# Same for middle and back legs ...
+```
+
+I then created a general function `step_legs()`
+
+```python
+def step_legs(self, left:Leg, right:Leg, params):
+    """Sets the back legs target position and moves the back legs"""
+
+    # Step the middle left and right legs
+
+    point_1 = self.skeleton.anchor.child.position
+    point_2 = self.skeleton.anchor.child.child.position
+
+    # Get vector for those two
+    dir_vector = (point_2 - point_1).normalize()
+
+    right.anchor_point = self.skeleton.anchor.child.position + (dir_vector * params.anchor_vert)
+    left.anchor_point = self.skeleton.anchor.child.position  + (dir_vector * params.anchor_vert)
+    
+    # Rotate the parent vector by the exact amount for the parent threshold
+    new_vec = pygame.Vector2(
+        dir_vector.x * math.cos(math.radians(-90)) - dir_vector.y * math.sin(math.radians(-90)),
+        dir_vector.x * math.sin(math.radians(-90)) + dir_vector.y * math.cos(math.radians(-90))
+    ) * params.horizontal
+
+    new_left_vec = new_vec + (dir_vector * params.vertical)
+    new_right_vec = (new_vec * -1) + (dir_vector * params.vertical)
+
+    left_target_point = left.anchor_point + new_left_vec
+    right_target_point = right.anchor_point + new_right_vec
+
+    if left.target_point.distance_to(left_target_point) > params.dist:
+        left.set_target_point(left_target_point)
+    
+    if right.target_point.distance_to(right_target_point) > params.dist:
+        right.set_target_point(right_target_point)
+
+    left.step()
+    right.step()
+```
+
+Now we can call this instead of the separate functions:
+
+```python
+self.step_legs(self.left_front, self.right_front, self.front_params)
+self.step_legs(self.left_middle, self.right_middle, self.middle_params)
+self.step_legs(self.left_back, self.right_back, self.back_params)
+```
+
+And we have gone down from the number of lines being in the 200s down to 141 lines and the same functionality - optimisation 👍🏾.
+
+Next thing I can think to look at is the step function itself to see if there is anything that can be made better. I first removed the calculation of the `new_left_vec` and `new_right_vec`and just put them in the calculation of the left and right target point instead. Note: all current optimisations got the simulation up to 150 FPS on average.
+
+I then removed the recalculations of the angles when rotating the parent vector so we aren't recalculating angles in radians and the sin and cos of angles. Also removed the drawing of target points for legs.
+
+With all the optimisations I got the simulation running at 370 FPS approximately.
+
+I next wanted to try removing all cases where I have reassigned a Vector2 by creating a new object (similar to the cos and sin removals). This didn't make much of an extra improvement but we ended up on a solid 370 fps max. This should mean if the simulation is scaled down with multiple little ants running around we'll still have decent performance (of course assuming the simulation is optimised as well).
+
+I'd love to find more optimisations though - maybe in the data structure for the skeletons.
+
+To help out, i installed a package called `cProfile` which shows what functions take the most cumulative time during the running of the simulation.
+
+This was very eye opening as it showed just how many times certain functions are being called, here is a table of the notable functions and their stats in a 7.870 second simulation run time:
+
+| Function Name        | Calls   | Total Time (s) | Per Call (ms) |
+|----------------------|---------|----------------|---------------|
+| step (Ant)           | 1684    | 7.870          | 0.00          |
+| normalize (Vector2)  | 2035638 | 0.266          | 0.00          |
+| constrain_child (Dot)| 1520673 | 1.262          | 0.00          |
+| constrain_parent (Dot)| 1515600 | 1.251         | 0.00          |
+| angle_to (Vector2)    | 1012091 | 0.179         | 0.00          |
+| abs                  | 2023856 | 0.229          | 0.00          |
+
+This means that the main points of improvement could be in these areas/functions. Another thing I did notice is that filling circles for the body segments actually requires a lot of time in the simulation and is its own separate function in the list of functions.
+
+Currently I can't see any specific points where I can make this run better so I'll leave it and finalise the simulation by giving it some more realistic colours and:
+
+<div align="center">
+    <img src="./assets/final_ant.gif" width="600" />
+    <p><em>Figure 13: Final ant</em></p>
+</div>
 
 [^1]: [Argonaut's "A simple procedural animation technique"](https://www.youtube.com/watch?v=qlfh_rv6khY)
 [^2]: [FABRIK IK algorithm query](https://stackoverflow.com/questions/72883753/how-to-implement-fabrik-algorithm-inverse-kinematics-with-joint-angle-constrai)

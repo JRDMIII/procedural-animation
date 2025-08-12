@@ -47,20 +47,7 @@ class Skeleton:
 
         current_dot = self.anchor
         
-    def step(self):
-        # velocity = pygame.Vector2(math.cos(self.current_angle)*3, math.sin(self.current_angle)*3)
-        # self.current_angle = (self.current_angle + 5) % 360
-
-        # self.anchor.position += velocity
-    
-        # center = pygame.Vector2(self.dimensions.x / 2, self.dimensions.y / 2)
-        # a = 350  # size of the infinity sign
-        # self.current_angle = (self.current_angle + 0.005) % (2 * math.pi)
-
-        # # Lemniscate of Gerono
-        # self.anchor.position.x = center.x + a * math.cos(self.current_angle)
-        # self.anchor.position.y = center.y + a * math.sin(self.current_angle) * math.cos(self.current_angle)
-
+    def step(self):    
         # Loop through all dots and constrain them
         current_dot:Dot = self.anchor
         
@@ -72,9 +59,14 @@ class Skeleton:
         current_dot = self.anchor
 
         while current_dot != None:
+            # pygame.draw.circle(screen,
+            #     (255, 0, 0) if current_dot.id == 0  else (255, 255, 255), 
+            #     current_dot.position, self.dot_sizes[current_dot.id], 0)
+
             pygame.draw.circle(screen,
-                (255, 0, 0) if current_dot.id == 0  else (255, 255, 255), 
+                (240, 220, 180) if current_dot.id == 0  else (240, 220, 180), 
                 current_dot.position, self.dot_sizes[current_dot.id], 0)
+
             current_dot = current_dot.child
         
     def __str__(self):

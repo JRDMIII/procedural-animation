@@ -56,10 +56,13 @@ class Dot:
 
                 set_angle = angle_thresh if angle < angle_thresh else (360 - angle_thresh)
 
+                angle = math.radians(set_angle)
+                a_cos, a_sin = math.cos(angle), math.sin(angle)
+
                 # Rotate the parent vector by the exact amount for the parent threshold
                 new_vec = pygame.Vector2(
-                    norm_vec.x * math.cos(math.radians(set_angle)) - norm_vec.y * math.sin(math.radians(set_angle)),
-                    norm_vec.x * math.sin(math.radians(set_angle)) + norm_vec.y * math.cos(math.radians(set_angle))
+                    norm_vec.x * a_cos - norm_vec.y * a_sin,
+                    norm_vec.x * a_sin + norm_vec.y * a_cos
                 ) * self.dist
 
                 # Set our position to be our parents position + the vector to get to the correct angle
@@ -98,12 +101,15 @@ class Dot:
 
                 set_angle = angle_thresh if angle < angle_thresh else (360 - angle_thresh)
 
+                angle = math.radians(set_angle)
+                a_cos, a_sin = math.cos(angle), math.sin(angle)
+
                 # Rotate the parent vector by the exact amount for the parent threshold
                 new_vec = pygame.Vector2(
-                    norm_vec.x * math.cos(math.radians(set_angle)) - norm_vec.y * math.sin(math.radians(set_angle)),
-                    norm_vec.x * math.sin(math.radians(set_angle)) + norm_vec.y * math.cos(math.radians(set_angle))
+                    norm_vec.x * a_cos - norm_vec.y * a_sin,
+                    norm_vec.x * a_sin + norm_vec.y * a_cos
                 ) * self.dist
-
+                
                 # Set our position to be our parents position + the vector to get to the correct angle
                 self.position = middle.position + new_vec
 
